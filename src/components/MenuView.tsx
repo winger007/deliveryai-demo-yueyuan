@@ -6,14 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { money, uid } from '@/lib/utils'
 import type { CartItem, Product } from '@/types'
+import type { DishOrderStats } from '@/hooks/useDishOrderStats'
 
 interface MenuViewProps {
   diners: string[]
   soldOut: string[]
   onAdd: (item: CartItem) => void
+  dishOrderStats?: DishOrderStats
 }
 
-export function MenuView({ diners, soldOut, onAdd }: MenuViewProps) {
+export function MenuView({ diners, soldOut, onAdd, dishOrderStats }: MenuViewProps) {
   const { t } = useTranslation()
   const [category, setCategory] = useState('menu.cat.recommend')
   const [search, setSearch] = useState('')
@@ -95,7 +97,15 @@ export function MenuView({ diners, soldOut, onAdd }: MenuViewProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/45 to-transparent" />
                 {product.badge && <span className="absolute left-3 top-3 rounded-full bg-amber-400 px-3 py-1 text-xs font-extrabold text-charcoal-900">{t(product.badge)}</span>}
                 {unavailable && <span className="absolute inset-0 flex items-center justify-center bg-white/55 text-lg font-extrabold text-charcoal-900 backdrop-blur-sm">{t('menu.sold_out')}</span>}
-                {product.orderedCount && <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-bold text-chili-600"><Check size={13} />{t('menu.ordered_table', { count: product.orderedCount })}</span>}
+                {(() => {
+                const tableCount = product.orderedCount
+                const totalCount = dishOrderStats?.[product.id]?.totalOrderedCount ?? product.totalOrderedCount ?? 0
+                return (tableCount || totalCount > 0) ? (
+                  <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-xs font-bold text-chili-600">
+                    <Check size={13} />{t('menu.history_orders', { count: totalCount })}
+                  </span>
+                ) : null
+              })()}
               </div>
               <div className="p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-extrabold text-charcoal-900">{t(product.name)}</h3><p className="mt-1 line-clamp-1 text-xs text-charcoal-500">{t(product.description)}</p></div><Button size="icon" disabled={unavailable} onClick={() => openSpec(product)} className="h-10 w-10 shrink-0 rounded-full"><Plus size={18} /></Button></div><p className="mt-4 text-xl font-extrabold text-chili-500">{money(product.price)} <small className="text-xs font-medium text-charcoal-500">{t('menu.from')}</small></p></div>
             </article>

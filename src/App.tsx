@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useReducer, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 import i18next from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { ClipboardList, ConciergeBell, LayoutDashboard, Menu as MenuIcon, ShoppingBasket } from 'lucide-react'
+import { ClipboardList, ConciergeBell, Flame, LayoutDashboard, Menu as MenuIcon, ShoppingBasket } from 'lucide-react'
 import { HomeView } from '@/components/HomeView'
 import { WelcomeView } from '@/components/WelcomeView'
 import { CartPanel } from '@/components/CartPanel'
@@ -89,6 +89,16 @@ export default function App() {
     dispatch({ type: 'SET_MESSAGE', message: elderly ? '已切换为常规模式' : '已切换为老人模式' })
   }
 
+  const popularDishesSidebar = useMemo(() => {
+    return [...products]
+      .map(p => ({
+        ...p,
+        monthlyOrderedCount: dishOrderStats[p.id]?.monthlyOrderedCount ?? p.monthlyOrderedCount ?? 0,
+      }))
+      .sort((a, b) => b.monthlyOrderedCount - a.monthlyOrderedCount)
+      .slice(0, 3)
+  }, [dishOrderStats])
+
   if (state.view === 'home' || !state.table) {
     return <HomeView onBind={(table) => dispatch({ type: 'BIND_TABLE', table })} dishOrderStats={dishOrderStats} />
   }
@@ -115,7 +125,7 @@ export default function App() {
       {state.view === 'menu' && (
         <main className="mx-auto grid max-w-7xl gap-6 px-4 py-5 pb-28 lg:grid-cols-3 lg:px-6 lg:py-7 lg:pb-8">
           <div className="lg:col-span-2">
-            <MenuView diners={state.diners} soldOut={state.soldOut} onAdd={(item) => dispatch({ type: 'ADD_CART', item })} />
+            <MenuView diners={state.diners} soldOut={state.soldOut} onAdd={(item) => dispatch({ type: 'ADD_CART', item })} dishOrderStats={dishOrderStats} />
           </div>
           <aside className="hidden lg:block">
             <div className="sticky top-28">
@@ -123,6 +133,31 @@ export default function App() {
               <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-100/70 p-4 text-sm text-charcoal-700">
                 <p className="font-bold">{t('common.collab_title')}</p>
                 <p className="mt-1 leading-6 text-charcoal-500">{t('common.collab_desc')}</p>
+              </div>
+              {/* 最近一个月最受欢迎菜品 */}
+              <div className="mt-4 rounded-2xl border border-charcoal-900/5 bg-white p-4">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-charcoal-900">
+                  <Flame size={16} className="text-chili-500" /> {t('home.popular_title')}
+                </h3>
+                <div className="space-y-2">
+                  {popularDishesSidebar.map((product, index) => {
+                    const stat = dishOrderStats[product.id] || { monthlyOrderedCount: 0, totalOrderedCount: 0 }
+                    return (
+                      <div key={product.id} className="flex items-center gap-3 rounded-xl border border-charcoal-900/5 bg-rice-50 p-2.5">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-chili-500 text-xs font-bold text-white">{index + 1}</span>
+                        <img src={product.image} alt={t(product.name)} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-bold text-charcoal-900">{t(product.name)}</p>
+                          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-charcoal-500">
+                            <span className="font-semibold text-chili-600">{t('home.popular_monthly', { count: stat.monthlyOrderedCount })}</span>
+                            <span className="text-charcoal-900/20">·</span>
+                            <span>{t('home.popular_total', { count: stat.totalOrderedCount })}</span>
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </aside>
