@@ -63,6 +63,11 @@ const resources = {
           window: '窗边',
         },
       },
+      home: {
+        popular_title: '最近一个月最受欢迎',
+        popular_monthly: '近一月 {{count}} 单',
+        popular_total: '历史 {{count}} 单',
+      },
       welcome: {
         badge: '欢迎光临',
         title: '欢迎光临沸点！',
@@ -300,6 +305,11 @@ const resources = {
           room: 'Private Room',
           window: 'Window Seat',
         },
+      },
+      home: {
+        popular_title: 'Most Popular This Month',
+        popular_monthly: 'Last month: {{count}} orders',
+        popular_total: 'Total: {{count}} orders',
       },
       welcome: {
         badge: 'Welcome',
