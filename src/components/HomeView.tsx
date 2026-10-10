@@ -1,7 +1,10 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronRight, MapPin, QrCode, Sparkles, Users } from 'lucide-react'
+import { Check, ChevronRight, Flame, MapPin, QrCode, Sparkles, Users } from 'lucide-react'
 import hotpot from '@/assets/hotpot.jpg'
 import { Button } from '@/components/ui/button'
+import { products } from '@/data/menu'
+import type { DishOrderStats } from '@/hooks/useDishOrderStats'
 
 const tableOptions = [
   { code: 'A08', areaKey: 'bind.area.hall', seats: 4 },
@@ -10,10 +13,24 @@ const tableOptions = [
   { code: 'D03', areaKey: 'bind.area.window', seats: 6 },
 ]
 
-interface HomeViewProps { onBind: (table: string) => void }
+interface HomeViewProps {
+  onBind: (table: string) => void
+  dishOrderStats: DishOrderStats
+}
 
-export function HomeView({ onBind }: HomeViewProps) {
+export function HomeView({ onBind, dishOrderStats }: HomeViewProps) {
   const { t } = useTranslation()
+
+  const popularDishes = useMemo(() => {
+    return [...products]
+      .map(p => ({
+        ...p,
+        monthlyOrderedCount: dishOrderStats[p.id]?.monthlyOrderedCount ?? p.monthlyOrderedCount ?? 0,
+      }))
+      .sort((a, b) => b.monthlyOrderedCount - a.monthlyOrderedCount)
+      .slice(0, 3)
+  }, [dishOrderStats])
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-rice-100 paper-noise">
       <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-chili-100 blur-3xl" />
@@ -59,6 +76,32 @@ export function HomeView({ onBind }: HomeViewProps) {
             ))}
           </div>
           <Button onClick={() => onBind('A08')} className="mt-4 w-full"><MapPin size={17} />{t('bind.quick_enter')}</Button>
+
+          {/* 最近一个月最受欢迎菜品 */}
+          <div className="mt-6 border-t border-charcoal-900/5 pt-5">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-charcoal-900">
+              <Flame size={16} className="text-chili-500" /> {t('home.popular_title')}
+            </h3>
+            <div className="space-y-2">
+              {popularDishes.map((product, index) => {
+                const stat = dishOrderStats[product.id] || { monthlyOrderedCount: 0, totalOrderedCount: 0 }
+                return (
+                  <div key={product.id} className="flex items-center gap-3 rounded-2xl border border-charcoal-900/5 bg-rice-50 p-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-chili-500 text-xs font-bold text-white">{index + 1}</span>
+                    <img src={product.image} alt={t(product.name)} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-charcoal-900">{t(product.name)}</p>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-xs text-charcoal-500">
+                        <span className="font-semibold text-chili-600">{t('home.popular_monthly', { count: stat.monthlyOrderedCount })}</span>
+                        <span className="text-charcoal-900/20">·</span>
+                        <span>{t('home.popular_total', { count: stat.totalOrderedCount })}</span>
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </section>
       </div>
     </main>

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useElderlyMode } from '@/hooks/useElderlyMode'
 import { initialViewFromHash, useViewRoute } from '@/hooks/useViewRoute'
+import { useDishOrderStats } from '@/hooks/useDishOrderStats'
 import { orderReducer, initialState } from '@/state/orderReducer'
 import { products } from '@/data/menu'
 import { money } from '@/lib/utils'
@@ -50,6 +51,7 @@ export default function App() {
   const { t, i18n } = useTranslation()
   const [state, dispatch] = useReducer(orderReducer, undefined, createInitialState)
   const { enabled: elderly, toggle: toggleElderly } = useElderlyMode()
+  const { stats: dishOrderStats, increment: incrementOrderStats } = useDishOrderStats()
   const [serviceOpen, setServiceOpen] = useState(false)
   const [consoleOpen, setConsoleOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
@@ -75,6 +77,7 @@ export default function App() {
 
   const changeView = (view: ViewName) => dispatch({ type: 'SET_VIEW', view })
   const submitOrder = () => {
+    if (state.cart.length) incrementOrderStats(state.cart)
     dispatch({ type: 'SUBMIT_ORDER' })
     setCartOpen(false)
   }
@@ -87,7 +90,7 @@ export default function App() {
   }
 
   if (state.view === 'home' || !state.table) {
-    return <HomeView onBind={(table) => dispatch({ type: 'BIND_TABLE', table })} />
+    return <HomeView onBind={(table) => dispatch({ type: 'BIND_TABLE', table })} dishOrderStats={dishOrderStats} />
   }
 
   if (state.view === 'welcome') {

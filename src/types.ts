@@ -10,6 +10,8 @@ export interface Product {
   image: string
   badge?: string
   orderedCount?: number
+  monthlyOrderedCount?: number
+  totalOrderedCount?: number
   options?: {
     portion?: string[]
     flavor?: string[]
